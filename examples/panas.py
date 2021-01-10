@@ -1,45 +1,26 @@
 import time
-#import busio
-#import board
 import cv2
 import math
 #import adafruit_amg88xx
-#import Adafruit_AMG88xx
-#import adafruit_amg88xx
-#from Adafruit_AMG88xx import Adafruit_AMG88xx as adafruit_amg88xx
 from Adafruit_AMG88xx import Adafruit_AMG88xx
-
 import picamera
 import picamera.array
-
 import matplotlib.pyplot as plt
 import numpy as np
-
 from scipy.interpolate import griddata
-#import pygame
-#from colour import Color
+from firebase import firebase
+import datetime
 
 plt.ion()
-#plt.figure()
 plt.subplots(figsize=(8, 4))
 
-# I2C bus initialization
-#i2c_bus = busio.I2C(board.SCL, board.SDA)
-
-
-#low range of the sensor (this will be blue on the screen)
 MINTEMP = 26
-
-#high range of the sensor (this will be red on the screen)
 MAXTEMP = 32
 
-#how many color values we can have
 COLORDEPTH = 1024
 points = [(math.floor(ix / 8), (ix % 8)) for ix in range(0, 64)]
-#grid_x, grid_y = np.mgrid[0:7:32j, 0:7:32j]
 grid_x, grid_y = np.mgrid[0:7:32j, 0:7:32j]
 
-#sensor is an 8x8 grid so lets do a square
 height = 480
 width = 480
 
@@ -62,7 +43,6 @@ try:
 	time.sleep(.1)
 
 	while True:
-		
 
 		with picamera.PiCamera() as camera:
 			camera.resolution = (320, 240)
