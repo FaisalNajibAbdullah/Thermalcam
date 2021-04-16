@@ -155,6 +155,7 @@ try:
 		
 		frame0 = cv2.imread('./tmp.jpg')
 		frame = frame0[0:240,41:280]
+		#frame = cv2.bilateralFilter(frame,5,25,25)
 		frame = frame[:, :, ::-1].copy()
 		
 		plt.subplot(1,2,1)
@@ -193,14 +194,18 @@ try:
 			label = "Mask" if mask > withoutMask else "No Mask"
 			color = (0, 255, 0) if label == "Mask" else (255, 0, 0)
 
-			# include the probability in the label
-			label = label + str(" : " + "%.2f" % rums100 + " C")
+			# akurasi suhu
+			# label = label + str(" : " + "%.2f" % rums100 + " C")
+			
+			# akurasi masker
+			label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
 
 			# display the label and bounding box rectangle on the output
 			# frame
 			cv2.putText(frame, label, (startX, startY - 10),
 				cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
 			cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+			print(label)
 
 		plt.subplot(1,2,2)
 		plt.imshow(frame)

@@ -118,11 +118,9 @@ try:
 		
 		plt.subplot(1,2,2)
 		plt.imshow(img)
-<<<<<<< HEAD
-=======
+
 		#plt.text(0, -10, str("%.2f" % rums250) +' deg Celcius',size = 40, color = "red")
 		#plt.text(0, -10, str(max_temp) +' deg Celcius',size = 40, color = "red")
->>>>>>> 0d853386e652b78152264c306c5fc49d12c9e444
 
 		plt.draw()
 
