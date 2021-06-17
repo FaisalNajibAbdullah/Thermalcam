@@ -15,7 +15,16 @@ from Adafruit_AMG88xx import Adafruit_AMG88xx
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from firebase import firebase
-import datetime
+import datetime 
+import RPi.GPIO as GPIO
+import time
+
+t = datetime.datetime.now()
+
+try:
+    firebase = firebase.FirebaseApplication('https://termalcam-d9c8e.firebaseio.com/')
+except:
+    print ("Koneksi Gagal")
 
 def detect_and_predict_mask(frame, faceNet, maskNet):
 	# grab the dimensions of the frame and then construct a blob
@@ -110,6 +119,45 @@ displayPixelWidth = width / 30
 displayPixelHeight = height / 30
 #---------------------------------------
 
+#GPIO Mode (BOARD / BCM)
+GPIO.setmode(GPIO.BCM)
+ 
+#set GPIO Pins
+GPIO_TRIGGER = 18
+GPIO_ECHO = 24
+ 
+#set GPIO direction (IN / OUT)
+GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
+GPIO.setup(GPIO_ECHO, GPIO.IN)
+ 
+def distance():
+    # set Trigger to HIGH
+    GPIO.output(GPIO_TRIGGER, True)
+ 
+    # set Trigger after 0.01ms to LOW
+    time.sleep(0.00001)
+    GPIO.output(GPIO_TRIGGER, False)
+ 
+    StartTime = time.time()
+    StopTime = time.time()
+ 
+    # save StartTime
+    while GPIO.input(GPIO_ECHO) == 0:
+        StartTime = time.time()
+ 
+    # save time of arrival
+    while GPIO.input(GPIO_ECHO) == 1:
+        StopTime = time.time()
+ 
+    # time difference between start and arrival
+    TimeElapsed = StopTime - StartTime
+    # multiply with the sonic speed (34300 cm/s)
+    # and divide by 2, because there and back
+    distance = (TimeElapsed * 34300) / 2
+ 
+    return distance
+#---------------------------------------
+
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-f", "--face", type=str,
@@ -173,14 +221,12 @@ try:
 		# face mask or not
 		(locs, preds) = detect_and_predict_mask(frame, faceNet, maskNet)
 		
-		varA = 0.022380841
-		varb1 = -0.00166934
-		varb2 = 1.173835088
+		dist = distance()
+		varA = 26.83741554
+		varb1 = -0.00966282
+		varb2 = 0.324591334
 		mxs = 38
 		rums100 = varA + (varb1 * 100) + (varb2 * max_temp) + 2.503336
-		#rums150 = varA + (varb1 * 150) + (varb2 * max_temp) + 3.17472
-		#rums200 = varA + (varb1 * 200) + (varb2 * max_temp) + 3.844105
-		#rums250 = varA + (varb1 * 250) + (varb2 * max_temp) + 4.514489
 
 		# loop over the detected face locations and their corresponding
 		# locations
@@ -192,20 +238,229 @@ try:
 			# determine the class label and color we'll use to draw
 			# the bounding box and text
 			label = "Mask" if mask > withoutMask else "No Mask"
-			color = (0, 255, 0) if label == "Mask" else (255, 0, 0)
+			#color = (0, 255, 0) if label == "Mask" else (255, 0, 0)
+
+			if dist <= 49 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 1
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 49 and dist <= 99 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 1.5
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 99 and dist <= 149 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 2
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 149 and dist <= 169 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 2.5
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 169 and dist <= 199 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 2.7
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 199 and dist <= 219 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 3.2
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 219 and dist <= 249 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 3.5
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 249 and dist <= 269 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 3.7
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 269 and dist <= 300 :
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 4
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			elif dist > 300:
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 5
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+			else:
+				rums = varA + (varb1 * dist) + (varb2 * max_temp) + 5
+				label2 = label + str(" : " + "%.2f" % rums + " C")
+				if rums < 38 and label == "Mask":
+					color = (0, 255, 0)
+					aman = "Suhu Normal"
+				elif rums < 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				elif rums >= 38 and label == "No Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Tinggi"
+				elif rums >= 38 and label == "Mask":
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
+				else:
+					color = (255, 0, 0)
+					aman = "Suhu Normal"
 
 			# akurasi suhu
 			# label = label + str(" : " + "%.2f" % rums100 + " C")
 			
 			# akurasi masker
-			label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
+			#label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
 
 			# display the label and bounding box rectangle on the output
 			# frame
 			cv2.putText(frame, label, (startX, startY - 10),
 				cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
 			cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+
+			try:
+				result = firebase.post('termalcam', {'tingkat':str("aman"), 'rTemp':str("%.2f" % rums), 'aTemp':str(max_temp), 'jarak':str("%.1f" % dist), 'mask':str(label), 'time':str(t)})
+			except:
+				print ("Koneksi Gagal")
+				
+			print(max_temp)
+			print(rums)
+			print("%.1f " % dist)
 			print(label)
+			print(aman)
 
 		plt.subplot(1,2,2)
 		plt.imshow(frame)
